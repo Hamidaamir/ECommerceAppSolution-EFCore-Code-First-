@@ -2,9 +2,7 @@
 using ECommerceApp.Core.Interfaces.IServices;
 using ECommerceApp.Core.Models;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
-using System.IO;
 
 namespace ECommerceApp.Services
 {
@@ -21,31 +19,32 @@ namespace ECommerceApp.Services
 
         public async Task AddUser()
         {
-            EnsureDirectoryExists();
-
-            var users = await _userRepo.GetAllAsync();
-            var addresses = await _addressRepo.GetAllAsync();
-
             Console.Write("Name: ");
             var name = Console.ReadLine() ?? "";
+
             Console.Write("Email: ");
             var email = Console.ReadLine() ?? "";
 
-            var user = new User { Id = users.Count + 1, Name = name, Email = email };
-            users.Add(user);
+            var user = new User { Name = name, Email = email };
+
+            await _userRepo.AddAsync(user);
 
             Console.Write("City: ");
             var city = Console.ReadLine() ?? "";
+
             Console.Write("Street: ");
             var street = Console.ReadLine() ?? "";
 
-            var address = new Address { Id = addresses.Count + 1, UserId = user.Id, City = city, Street = street };
-            addresses.Add(address);
+            var address = new Address
+            {
+                UserId = user.Id,
+                City = city,
+                Street = street
+            };
 
-            await _userRepo.SaveAllAsync(users);
-            await _addressRepo.SaveAllAsync(addresses);
+            await _addressRepo.AddAsync(address);
 
-            Console.WriteLine("User + Address Added!");
+            Console.WriteLine("User Added!");
         }
 
         public async Task ViewUsers()
@@ -64,48 +63,42 @@ namespace ECommerceApp.Services
 
         public async Task DeleteUser()
         {
-            EnsureDirectoryExists();
-
-            var users = await _userRepo.GetAllAsync();
-            var addresses = await _addressRepo.GetAllAsync();
-
             Console.Write("Enter User ID: ");
-            int id = int.Parse(Console.ReadLine() ?? "0");
+            if (!int.TryParse(Console.ReadLine(), out int id))
+            {
+                Console.WriteLine("Invalid ID format!");
+                return;
+            }
 
-            users.RemoveAll(u => u.Id == id);
-            addresses.RemoveAll(a => a.UserId == id);
+            await _userRepo.DeleteAsync(id);
 
-            await _userRepo.SaveAllAsync(users);
-            await _addressRepo.SaveAllAsync(addresses);
-
-            Console.WriteLine("User deleted!");
+            Console.WriteLine("Deleted!");
         }
 
         public async Task UpdateUser()
         {
-            EnsureDirectoryExists();
-            var users = await _userRepo.GetAllAsync();
-
             Console.Write("Enter User ID: ");
-            int id = int.Parse(Console.ReadLine() ?? "0");
+            if (!int.TryParse(Console.ReadLine(), out int id))
+            {
+                Console.WriteLine("Invalid ID format!");
+                return;
+            }
 
-            var user = users.FirstOrDefault(u => u.Id == id);
-            if (user == null) { Console.WriteLine("User not found!"); return; }
+            var user = await _userRepo.GetByIdAsync(id);
+            if (user == null)
+            {
+                Console.WriteLine("Not found");
+                return;
+            }
 
             Console.Write("New Name: ");
             user.Name = Console.ReadLine() ?? "";
+
             Console.Write("New Email: ");
             user.Email = Console.ReadLine() ?? "";
 
-            await _userRepo.SaveAllAsync(users);
-            Console.WriteLine("User updated!");
-        }
-
-        private void EnsureDirectoryExists()
-        {
-            var dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Files");
-            if (!Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
+            await _userRepo.UpdateAsync(user);
+            Console.WriteLine("User Updated!");
         }
     }
 }

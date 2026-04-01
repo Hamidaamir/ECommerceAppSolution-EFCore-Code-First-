@@ -4,8 +4,6 @@ using ECommerceApp.Core.Models;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using System.IO;
-using System.Collections.Generic;
 
 namespace ECommerceApp.Services
 {
@@ -24,38 +22,80 @@ namespace ECommerceApp.Services
 
         public async Task CreateOrder()
         {
-            EnsureDirectoryExists();
-
-            var orders = await _orderRepo.GetAllAsync();
-            var items = await _itemRepo.GetAllAsync();
-            var products = await _productRepo.GetAllAsync();
-
             Console.Write("Enter UserId: ");
-            int userId = int.Parse(Console.ReadLine() ?? "0");
+            if (!int.TryParse(Console.ReadLine(), out int userId) || userId <= 0)
+            {
+                Console.WriteLine("Invalid User ID format!");
+                return;
+            }
 
-            var order = new Order { Id = orders.Count + 1, UserId = userId, OrderDate = DateTime.Now };
-            orders.Add(order);
+            var order = new Order
+            {
+                UserId = userId,
+                OrderDate = DateTime.Now
+            };
+
+            await _orderRepo.AddAsync(order);
+            var availableProducts = await _productRepo.GetAllAsync();
 
             while (true)
             {
                 Console.Write("Enter ProductId (0 to stop): ");
-                int pid = int.Parse(Console.ReadLine() ?? "0");
-                if (pid == 0) break;
+                if (!int.TryParse(Console.ReadLine(), out int pid))
+                {
+                    Console.WriteLine("Invalid Product ID format!");
+                    continue;
+                }
+
+                if (pid == 0)
+                    break;
+
+                // Validate product exists
+                var product = availableProducts.FirstOrDefault(p => p.Id == pid);
+                if (product == null)
+                {
+                    Console.WriteLine($"Product with ID {pid} does not exist!");
+                    continue;
+                }
 
                 Console.Write("Quantity: ");
-                int qty = int.Parse(Console.ReadLine() ?? "0");
+                if (!int.TryParse(Console.ReadLine(), out int qty) || qty <= 0)
+                {
+                    Console.WriteLine("Invalid quantity format! Please enter a positive number.");
+                    continue;
+                }
 
-                items.Add(new OrderItem { Id = items.Count + 1, OrderId = order.Id, ProductId = pid, Quantity = qty });
+                var item = new OrderItem
+                {
+                    OrderId = order.Id,
+                    ProductId = pid,
+                    Quantity = qty
+                };
+
+                try
+                {
+                    await _itemRepo.AddAsync(item);
+                    Console.WriteLine($"Item added to order! Product: {product.Name}, Price: ${product.Price:F2}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error adding item to order: {ex.Message}");
+                }
             }
 
-            await _orderRepo.SaveAllAsync(orders);
-            await _itemRepo.SaveAllAsync(items);
             Console.WriteLine("Order Created!");
         }
 
         public async Task ViewOrders()
         {
             var orders = await _orderRepo.GetAllAsync();
+
+            if (orders.Count == 0)
+            {
+                Console.WriteLine("No orders found.");
+                return;
+            }
+
             var items = await _itemRepo.GetAllAsync();
             var products = await _productRepo.GetAllAsync();
 
@@ -63,18 +103,14 @@ namespace ECommerceApp.Services
             {
                 var total = items
                     .Where(i => i.OrderId == order.Id)
-                    .Join(products, i => i.ProductId, p => p.Id, (i, p) => i.Quantity * p.Price)
+                    .Join(products,
+                        i => i.ProductId,
+                        p => p.Id,
+                        (i, p) => i.Quantity * p.Price)
                     .Sum();
 
-                Console.WriteLine($"Order {order.Id} | Total: {total}");
+                Console.WriteLine($"Order {order.Id} | User: {order.UserId} | Date: {order.OrderDate:yyyy-MM-dd} | Total: ${total:F2}");
             }
-        }
-
-        private void EnsureDirectoryExists()
-        {
-            var dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Files");
-            if (!Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
         }
     }
 }

@@ -3,8 +3,6 @@ using ECommerceApp.Core.Interfaces.IServices;
 using ECommerceApp.Core.Models;
 using System;
 using System.Threading.Tasks;
-using System.IO;
-using System.Collections.Generic;
 
 namespace ECommerceApp.Services
 {
@@ -19,41 +17,57 @@ namespace ECommerceApp.Services
 
         public async Task AddProduct()
         {
-            EnsureDirectoryExists();
-            var products = await _repo.GetAllAsync();
-
             Console.Write("Name: ");
             var name = Console.ReadLine() ?? "";
-            Console.Write("Price: ");
-            var price = decimal.Parse(Console.ReadLine() ?? "0");
 
-            products.Add(new Product { Id = products.Count + 1, Name = name, Price = price });
-            await _repo.SaveAllAsync(products);
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                Console.WriteLine("Product name cannot be empty!");
+                return;
+            }
+
+            Console.Write("Price: ");
+            if (!decimal.TryParse(Console.ReadLine(), out decimal price) || price < 0)
+            {
+                Console.WriteLine("Invalid price format! Please enter a valid positive number.");
+                return;
+            }
+
+            var product = new Product
+            {
+                Name = name,
+                Price = price
+            };
+
+            await _repo.AddAsync(product);
+            Console.WriteLine("Product Added!");
         }
 
         public async Task ViewProducts()
         {
             var products = await _repo.GetAllAsync();
+
+            if (products.Count == 0)
+            {
+                Console.WriteLine("No products found.");
+                return;
+            }
+
             foreach (var p in products)
-                Console.WriteLine($"{p.Id} - {p.Name} - {p.Price}");
+                Console.WriteLine($"{p.Id} - {p.Name} - ${p.Price}");
         }
 
         public async Task DeleteProduct()
         {
-            EnsureDirectoryExists();
-            var products = await _repo.GetAllAsync();
             Console.Write("Enter ID to delete: ");
-            int id = int.Parse(Console.ReadLine() ?? "0");
+            if (!int.TryParse(Console.ReadLine(), out int id))
+            {
+                Console.WriteLine("Invalid ID format!");
+                return;
+            }
 
-            products.RemoveAll(p => p.Id == id);
-            await _repo.SaveAllAsync(products);
-        }
-
-        private void EnsureDirectoryExists()
-        {
-            var dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Files");
-            if (!Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
+            await _repo.DeleteAsync(id);
+            Console.WriteLine("Product Deleted!");
         }
     }
 }

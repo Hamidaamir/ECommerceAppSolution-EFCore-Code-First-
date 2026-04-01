@@ -8,6 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ECommerceApp.Core\ECommerceApp.Core.csproj" />
     <ProjectReference Include="..\ECommerceApp.Repository\ECommerceApp.Repository.csproj" />
     <ProjectReference Include="..\ECommerceApp.Services\ECommerceApp.Services.csproj" />

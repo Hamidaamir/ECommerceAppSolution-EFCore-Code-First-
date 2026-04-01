@@ -50,7 +50,7 @@ namespace ECommerceApp.Services
                 if (pid == 0)
                     break;
 
-                // Validate product exists
+            
                 var product = availableProducts.FirstOrDefault(p => p.Id == pid);
                 if (product == null)
                 {

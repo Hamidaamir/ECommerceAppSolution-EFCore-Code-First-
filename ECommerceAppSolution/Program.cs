@@ -5,27 +5,34 @@ using ECommerceApp.Repository;
 using ECommerceApp.Repository.Data;
 using ECommerceApp.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 class Program
 {
     static async Task Main()
     {
+       
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .Build();
+
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
 
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseSqlServer("Server=.\\SQLEXPRESS;Database=ECommerceDB;Trusted_Connection=True;TrustServerCertificate=True")
+            .UseSqlServer(connectionString)
             .Options;
 
         var context = new AppDbContext(options);
 
-
-        // Repositories
+        
         IRepository<User> userRepo = new EfRepository<User>(context);
         IRepository<Address> addressRepo = new EfRepository<Address>(context);
         IRepository<Product> productRepo = new EfRepository<Product>(context);
         IRepository<Order> orderRepo = new EfRepository<Order>(context);
         IRepository<OrderItem> itemRepo = new EfRepository<OrderItem>(context);
 
-        // Services
+ 
         IUserService userService = new UserService(userRepo, addressRepo);
         IProductService productService = new ProductService(productRepo);
         IOrderService orderService = new OrderService(orderRepo, itemRepo, productRepo);
@@ -56,7 +63,7 @@ class Program
                 case "6": await productService.ViewProducts(); break;
                 case "7": await productService.DeleteProduct(); break;
                 case "8": await orderService.CreateOrder(); break;
-                case "9": await orderService.ViewOrders(); break;
+                case "9": await orderService.ViewOrders(); break;   
                 case "0": return;
             }
         }

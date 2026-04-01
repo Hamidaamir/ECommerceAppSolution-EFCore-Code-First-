@@ -7,7 +7,7 @@
         public string City { get; set; } = "";
         public string Street { get; set; } = "";
 
-        // Navigation property
+   
         public User? User { get; set; }
     }
 }

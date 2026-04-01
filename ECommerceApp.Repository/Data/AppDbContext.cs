@@ -16,25 +16,25 @@ namespace ECommerceApp.Repository.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // One-to-One (User - Address)
+           
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Address)
                 .WithOne(a => a.User)
                 .HasForeignKey<Address>(a => a.UserId);
 
-            // One-to-Many (User - Orders)
+            
             modelBuilder.Entity<User>()
                 .HasMany(u => u.Orders)
                 .WithOne(o => o.User)
                 .HasForeignKey(o => o.UserId);
 
-            // One-to-Many (Order - OrderItems)
+            
             modelBuilder.Entity<Order>()
                 .HasMany(o => o.Items)
                 .WithOne(i => i.Order)
                 .HasForeignKey(i => i.OrderId);
 
-            // Many-to-Many via OrderItem
+            
             modelBuilder.Entity<OrderItem>()
                 .HasOne(i => i.Product)
                 .WithMany(p => p.OrderItems)

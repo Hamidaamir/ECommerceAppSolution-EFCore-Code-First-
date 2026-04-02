@@ -1,104 +1,179 @@
-﻿using ECommerceApp.Core.Interfaces;
-using ECommerceApp.Core.Interfaces.IServices;
-using ECommerceApp.Core.Models;
+﻿using ECommerceApp.Core.Interfaces.Repositories;
+using ECommerceApp.Core.Interfaces.Services;
+using ECommerceApp.Core.Entities;
 using System;
 using System.Threading.Tasks;
+using System.Linq;
+
 
 namespace ECommerceApp.Services
 {
     public class UserService : IUserService
     {
-        private readonly IRepository<User> _userRepo;
-        private readonly IRepository<Address> _addressRepo;
+        private readonly IRepository<User> _userRepository;
+        private readonly IRepository<Address> _addressRepository;
 
-        public UserService(IRepository<User> userRepo, IRepository<Address> addressRepo)
+        public UserService(IRepository<User> userRepository, IRepository<Address> addressRepository)
         {
-            _userRepo = userRepo;
-            _addressRepo = addressRepo;
+            _userRepository = userRepository;
+            _addressRepository = addressRepository;
         }
 
-        public async Task AddUser()
+        public async Task AddUserAsync()
         {
-            Console.Write("Name: ");
-            var name = Console.ReadLine() ?? "";
-
-            Console.Write("Email: ");
-            var email = Console.ReadLine() ?? "";
-
-            var user = new User { Name = name, Email = email };
-
-            await _userRepo.AddAsync(user);
-
-            Console.Write("City: ");
-            var city = Console.ReadLine() ?? "";
-
-            Console.Write("Street: ");
-            var street = Console.ReadLine() ?? "";
-
-            var address = new Address
+            try
             {
-                UserId = user.Id,
-                City = city,
-                Street = street
-            };
+                Console.Write("Name: ");
+                string userName = Console.ReadLine() ?? "";
 
-            await _addressRepo.AddAsync(address);
+                if (string.IsNullOrWhiteSpace(userName))
+                {
+                    Console.WriteLine("User name cannot be empty!");
+                    return;
+                }
 
-            Console.WriteLine("User Added!");
-        }
+                Console.Write("Email: ");
+                string userEmail = Console.ReadLine() ?? "" ;
 
-        public async Task ViewUsers()
-        {
-            var users = await _userRepo.GetAllAsync();
-            var addresses = await _addressRepo.GetAllAsync();
+                if (string.IsNullOrWhiteSpace(userEmail) || !userEmail.Contains("@"))
+                {
+                    Console.WriteLine("Invalid email format!");
+                    return;
+                }
 
-            foreach (var user in users)
+                var newUser = new User
+                {
+                    Name = userName,
+                    Email = userEmail
+                };
+
+                await _userRepository.AddAsync(newUser);
+
+                Console.Write("City: ");
+                string addressCity = Console.ReadLine() ?? "";
+
+                Console.Write("Street: ");
+                string addressStreet = Console.ReadLine() ?? "";
+
+                if (string.IsNullOrWhiteSpace(addressCity) || string.IsNullOrWhiteSpace(addressStreet))
+                {
+                    Console.WriteLine("Address city and street cannot be empty!");
+                    return;
+                }
+
+                var newAddress = new Address
+                {
+                    UserId = newUser.Id,
+                    City = addressCity,
+                    Street = addressStreet
+                };
+
+                await _addressRepository.AddAsync(newAddress);
+                Console.WriteLine("User Added Successfully!");
+            }
+            catch (Exception ex)
             {
-                var address = addresses.FirstOrDefault(a => a.UserId == user.Id);
-                Console.WriteLine($"{user.Id} - {user.Name} - {user.Email}");
-                if (address != null)
-                    Console.WriteLine($"   Address: {address.City}, {address.Street}");
+                Console.WriteLine($"Error adding user: {ex.Message}");
             }
         }
 
-        public async Task DeleteUser()
+        public async Task ViewUsersAsync()
         {
-            Console.Write("Enter User ID: ");
-            if (!int.TryParse(Console.ReadLine(), out int id))
+            try
             {
-                Console.WriteLine("Invalid ID format!");
-                return;
+                var allUsers = await _userRepository.GetAllAsync();
+                var allAddresses = await _addressRepository.GetAllAsync();
+
+                if (allUsers.Count == 0)
+                {
+                    Console.WriteLine("No users found.");
+                    return;
+                }
+
+                foreach (var user in allUsers)
+                {
+                    var userAddress = allAddresses.FirstOrDefault(addr => addr.UserId == user.Id);
+                    Console.WriteLine($"{user.Id} - {user.Name} - {user.Email}");
+                    if (userAddress != null)
+                        Console.WriteLine($"Address: {userAddress.City}, {userAddress.Street}");
+                }
             }
-
-            await _userRepo.DeleteAsync(id);
-
-            Console.WriteLine("Deleted!");
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error retrieving users: {ex.Message}");
+            }
         }
 
-        public async Task UpdateUser()
+        public async Task DeleteUserAsync()
         {
-            Console.Write("Enter User ID: ");
-            if (!int.TryParse(Console.ReadLine(), out int id))
+            try
             {
-                Console.WriteLine("Invalid ID format!");
-                return;
-            }
+                Console.Write("Enter User ID: ");
+                string userIdInput = Console.ReadLine() ?? "";
 
-            var user = await _userRepo.GetByIdAsync(id);
-            if (user == null)
+                if (!Guid.TryParse(userIdInput, out Guid userId))
+                {
+                    Console.WriteLine("Invalid User ID format!");
+                    return;
+                }
+
+                await _userRepository.DeleteAsync(userId);
+                Console.WriteLine("User Deleted Successfully!");
+            }
+            catch (Exception ex)
             {
-                Console.WriteLine("Not found");
-                return;
+                Console.WriteLine($"Error deleting user: {ex.Message}");
             }
+        }
 
-            Console.Write("New Name: ");
-            user.Name = Console.ReadLine() ?? "";
+        public async Task UpdateUserAsync()
+        {
+            try
+            {
+                Console.Write("Enter User ID: ");
+                string userIdInput = Console.ReadLine() ?? "";
 
-            Console.Write("New Email: ");
-            user.Email = Console.ReadLine() ?? "";
+                if (!Guid.TryParse(userIdInput, out Guid userId))
+                {
+                    Console.WriteLine("Invalid User ID format!");
+                    return;
+                }
 
-            await _userRepo.UpdateAsync(user);
-            Console.WriteLine("User Updated!");
+                var userToUpdate = await _userRepository.GetByIdAsync(userId);
+                if (userToUpdate == null)
+                {
+                    Console.WriteLine($"User with ID '{userId}' not found!");
+                    return;
+                }
+
+                Console.Write("New Name: ");
+                string newName = Console.ReadLine() ?? "";
+
+                if (string.IsNullOrWhiteSpace(newName))
+                {
+                    Console.WriteLine("User name cannot be empty!");
+                    return;
+                }
+
+                Console.Write("New Email: ");
+                string newEmail = Console.ReadLine() ?? "";
+
+                if (string.IsNullOrWhiteSpace(newEmail) || !newEmail.Contains("@"))
+                {
+                    Console.WriteLine("Invalid email format!");
+                    return;
+                }
+
+                userToUpdate.Name = newName;
+                userToUpdate.Email = newEmail;
+
+                await _userRepository.UpdateAsync(userToUpdate);
+                Console.WriteLine("User Updated Successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating user: {ex.Message}");
+            }
         }
     }
 }

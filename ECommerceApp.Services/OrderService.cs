@@ -1,9 +1,7 @@
 ﻿using ECommerceApp.Core.Interfaces.Repositories;
 using ECommerceApp.Core.Interfaces.Services;
 using ECommerceApp.Core.Entities;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
+
 
 namespace ECommerceApp.Services
 {
@@ -89,37 +87,16 @@ namespace ECommerceApp.Services
             }
         }
 
-        public async Task ViewOrdersAsync()
+        public async Task<List<Order>> GetAllOrdersAsync()
         {
             try
             {
-                var allOrders = await _orderRepository.GetAllAsync();
-
-                if (allOrders.Count == 0)
-                {
-                    Console.WriteLine("No orders found.");
-                    return;
-                }
-
-                var allOrderItems = await _orderItemRepository.GetAllAsync();
-                var allProducts = await _productRepository.GetAllAsync();
-
-                foreach (var order in allOrders)
-                {
-                    decimal orderTotalAmount = allOrderItems
-                        .Where(item => item.OrderId == order.Id)
-                        .Join(allProducts,
-                            item => item.ProductId,
-                            product => product.Id,
-                            (item, product) => item.Quantity * product.Price)
-                        .Sum();
-
-                    Console.WriteLine($"Order {order.Id} | User: {order.UserId} | Date: {order.OrderDate:yyyy-MM-dd} | Total: ${orderTotalAmount:F2}");
-                }
+                return await _orderRepository.GetAllAsync();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error retrieving orders: {ex.Message}");
+                return new List<Order>();
             }
         }
     }

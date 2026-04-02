@@ -3,6 +3,7 @@ using ECommerceApp.Core.Interfaces.Services;
 using ECommerceApp.Core.Entities;
 
 
+
 namespace ECommerceApp.Services
 {
     public class ProductService : IProductService
@@ -57,24 +58,16 @@ namespace ECommerceApp.Services
             }
         }
 
-        public async Task ViewProductsAsync()
+        public async Task<List<Product>> GetAllProductsAsync()
         {
             try
             {
-                var allProducts = await _productRepository.GetAllAsync();
-
-                if (allProducts.Count == 0)
-                {
-                    Console.WriteLine("No products found.");
-                    return;
-                }
-
-                foreach (var product in allProducts)
-                    Console.WriteLine($"{product.Id} - {product.Name} - ${product.Price:F2}");
+                return await _productRepository.GetAllAsync();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error retrieving products: {ex.Message}");
+                return new List<Product>();
             }
         }
 
@@ -96,7 +89,7 @@ namespace ECommerceApp.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error deleting product: {ex.Message}");
+                Console.WriteLine($" Error deleting product: {ex.Message}");
             }
         }
     }

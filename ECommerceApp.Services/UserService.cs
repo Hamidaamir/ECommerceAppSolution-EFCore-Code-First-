@@ -4,7 +4,7 @@ using ECommerceApp.Core.Entities;
 using System;
 using System.Threading.Tasks;
 using System.Linq;
-
+using System.Collections.Generic;
 
 namespace ECommerceApp.Services
 {
@@ -77,30 +77,16 @@ namespace ECommerceApp.Services
             }
         }
 
-        public async Task ViewUsersAsync()
+        public async Task<List<User>> GetAllUsersAsync()
         {
             try
             {
-                var allUsers = await _userRepository.GetAllAsync();
-                var allAddresses = await _addressRepository.GetAllAsync();
-
-                if (allUsers.Count == 0)
-                {
-                    Console.WriteLine("No users found.");
-                    return;
-                }
-
-                foreach (var user in allUsers)
-                {
-                    var userAddress = allAddresses.FirstOrDefault(addr => addr.UserId == user.Id);
-                    Console.WriteLine($"{user.Id} - {user.Name} - {user.Email}");
-                    if (userAddress != null)
-                        Console.WriteLine($"Address: {userAddress.City}, {userAddress.Street}");
-                }
+                return await _userRepository.GetAllAsync();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error retrieving users: {ex.Message}");
+                return new List<User>();
             }
         }
 

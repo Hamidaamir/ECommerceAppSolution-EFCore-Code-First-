@@ -1,73 +1,96 @@
-﻿using ECommerceApp.Core.Interfaces;
-using ECommerceApp.Core.Interfaces.IServices;
-using ECommerceApp.Core.Models;
-using System;
-using System.Threading.Tasks;
+﻿using ECommerceApp.Core.Interfaces.Repositories;
+using ECommerceApp.Core.Interfaces.Services;
+using ECommerceApp.Core.Entities;
+
+
 
 namespace ECommerceApp.Services
 {
     public class ProductService : IProductService
     {
-        private readonly IRepository<Product> _repo;
+        private readonly IRepository<Product> _productRepository;
 
-        public ProductService(IRepository<Product> repo)
+        public ProductService(IRepository<Product> productRepository)
         {
-            _repo = repo;
+            _productRepository = productRepository;
         }
 
-        public async Task AddProduct()
+        public async Task AddProductAsync()
         {
-            Console.Write("Name: ");
-            var name = Console.ReadLine() ?? "";
-
-            if (string.IsNullOrWhiteSpace(name))
+            try
             {
-                Console.WriteLine("Product name cannot be empty!");
-                return;
+                Console.Write("Product Name: ");
+                string productName = Console.ReadLine() ?? "";
+
+                if (string.IsNullOrWhiteSpace(productName))
+                {
+                    Console.WriteLine("Product name cannot be empty!");
+                    return;
+                }
+
+                Console.Write("Product Price: ");
+                string priceInput = Console.ReadLine() ?? "";
+
+                if (!decimal.TryParse(priceInput, out decimal productPrice))
+                {
+                    Console.WriteLine("Invalid price format! Please enter a valid number.");
+                    return;
+                }
+
+                if (productPrice < 0)
+                {
+                    Console.WriteLine("Product price cannot be negative!");
+                    return;
+                }
+
+                var newProduct = new Product
+                {
+                    Name = productName,
+                    Price = productPrice
+                };
+
+                await _productRepository.AddAsync(newProduct);
+                Console.WriteLine("Product Added Successfully!");
             }
-
-            Console.Write("Price: ");
-            if (!decimal.TryParse(Console.ReadLine(), out decimal price) || price < 0)
+            catch (Exception ex)
             {
-                Console.WriteLine("Invalid price format! Please enter a valid positive number.");
-                return;
+                Console.WriteLine($"Error adding product: {ex.Message}");
             }
-
-            var product = new Product
-            {
-                Name = name,
-                Price = price
-            };
-
-            await _repo.AddAsync(product);
-            Console.WriteLine("Product Added!");
         }
 
-        public async Task ViewProducts()
+        public async Task<List<Product>> GetAllProductsAsync()
         {
-            var products = await _repo.GetAllAsync();
-
-            if (products.Count == 0)
+            try
             {
-                Console.WriteLine("No products found.");
-                return;
+                return await _productRepository.GetAllAsync();
             }
-
-            foreach (var p in products)
-                Console.WriteLine($"{p.Id} - {p.Name} - ${p.Price}");
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error retrieving products: {ex.Message}");
+                return new List<Product>();
+            }
         }
 
-        public async Task DeleteProduct()
+        public async Task DeleteProductAsync()
         {
-            Console.Write("Enter ID to delete: ");
-            if (!int.TryParse(Console.ReadLine(), out int id))
+            try
             {
-                Console.WriteLine("Invalid ID format!");
-                return;
-            }
+                Console.Write("Enter Product ID to delete: ");
+                string productIdInput = Console.ReadLine() ?? "";
 
-            await _repo.DeleteAsync(id);
-            Console.WriteLine("Product Deleted!");
+                if (!Guid.TryParse(productIdInput, out Guid productId))
+                {
+                    Console.WriteLine("Invalid Product ID format!");
+                    return;
+                }
+
+                await _productRepository.DeleteAsync(productId);
+                Console.WriteLine("Product Deleted Successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($" Error deleting product: {ex.Message}");
+            }
         }
     }
 }

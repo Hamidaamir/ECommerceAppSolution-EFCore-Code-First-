@@ -22,13 +22,11 @@ namespace ECommerceApp.Repository.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("ECommerceApp.Core.Models.Address", b =>
+            modelBuilder.Entity("ECommerceApp.Core.Entities.Address", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("City")
                         .IsRequired()
@@ -38,8 +36,8 @@ namespace ECommerceApp.Repository.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -49,19 +47,17 @@ namespace ECommerceApp.Repository.Migrations
                     b.ToTable("Addresses");
                 });
 
-            modelBuilder.Entity("ECommerceApp.Core.Models.Order", b =>
+            modelBuilder.Entity("ECommerceApp.Core.Entities.Order", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -70,19 +66,17 @@ namespace ECommerceApp.Repository.Migrations
                     b.ToTable("Orders");
                 });
 
-            modelBuilder.Entity("ECommerceApp.Core.Models.OrderItem", b =>
+            modelBuilder.Entity("ECommerceApp.Core.Entities.OrderItem", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("uniqueidentifier");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
@@ -96,13 +90,11 @@ namespace ECommerceApp.Repository.Migrations
                     b.ToTable("OrderItems");
                 });
 
-            modelBuilder.Entity("ECommerceApp.Core.Models.Product", b =>
+            modelBuilder.Entity("ECommerceApp.Core.Entities.Product", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -116,13 +108,11 @@ namespace ECommerceApp.Repository.Migrations
                     b.ToTable("Products");
                 });
 
-            modelBuilder.Entity("ECommerceApp.Core.Models.User", b =>
+            modelBuilder.Entity("ECommerceApp.Core.Entities.User", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -137,20 +127,20 @@ namespace ECommerceApp.Repository.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("ECommerceApp.Core.Models.Address", b =>
+            modelBuilder.Entity("ECommerceApp.Core.Entities.Address", b =>
                 {
-                    b.HasOne("ECommerceApp.Core.Models.User", "User")
+                    b.HasOne("ECommerceApp.Core.Entities.User", "User")
                         .WithOne("Address")
-                        .HasForeignKey("ECommerceApp.Core.Models.Address", "UserId")
+                        .HasForeignKey("ECommerceApp.Core.Entities.Address", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("ECommerceApp.Core.Models.Order", b =>
+            modelBuilder.Entity("ECommerceApp.Core.Entities.Order", b =>
                 {
-                    b.HasOne("ECommerceApp.Core.Models.User", "User")
+                    b.HasOne("ECommerceApp.Core.Entities.User", "User")
                         .WithMany("Orders")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -159,15 +149,15 @@ namespace ECommerceApp.Repository.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("ECommerceApp.Core.Models.OrderItem", b =>
+            modelBuilder.Entity("ECommerceApp.Core.Entities.OrderItem", b =>
                 {
-                    b.HasOne("ECommerceApp.Core.Models.Order", "Order")
+                    b.HasOne("ECommerceApp.Core.Entities.Order", "Order")
                         .WithMany("Items")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ECommerceApp.Core.Models.Product", "Product")
+                    b.HasOne("ECommerceApp.Core.Entities.Product", "Product")
                         .WithMany("OrderItems")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -178,17 +168,17 @@ namespace ECommerceApp.Repository.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("ECommerceApp.Core.Models.Order", b =>
+            modelBuilder.Entity("ECommerceApp.Core.Entities.Order", b =>
                 {
                     b.Navigation("Items");
                 });
 
-            modelBuilder.Entity("ECommerceApp.Core.Models.Product", b =>
+            modelBuilder.Entity("ECommerceApp.Core.Entities.Product", b =>
                 {
                     b.Navigation("OrderItems");
                 });
 
-            modelBuilder.Entity("ECommerceApp.Core.Models.User", b =>
+            modelBuilder.Entity("ECommerceApp.Core.Entities.User", b =>
                 {
                     b.Navigation("Address");
 

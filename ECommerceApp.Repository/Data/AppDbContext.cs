@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using ECommerceApp.Core.Models;
+using ECommerceApp.Core.Entities;
 
 namespace ECommerceApp.Repository.Data
 {
@@ -16,29 +16,31 @@ namespace ECommerceApp.Repository.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
            
             modelBuilder.Entity<User>()
-                .HasOne(u => u.Address)
-                .WithOne(a => a.User)
-                .HasForeignKey<Address>(a => a.UserId);
+                .HasOne(user => user.Address)
+                .WithOne(address => address.User)
+                .HasForeignKey<Address>(address => address.UserId);
 
-            
+           
             modelBuilder.Entity<User>()
-                .HasMany(u => u.Orders)
-                .WithOne(o => o.User)
-                .HasForeignKey(o => o.UserId);
+                .HasMany(user => user.Orders)
+                .WithOne(order => order.User)
+                .HasForeignKey(order => order.UserId);
 
-            
+           
             modelBuilder.Entity<Order>()
-                .HasMany(o => o.Items)
-                .WithOne(i => i.Order)
-                .HasForeignKey(i => i.OrderId);
+                .HasMany(order => order.Items)
+                .WithOne(orderItem => orderItem.Order)
+                .HasForeignKey(orderItem => orderItem.OrderId);
 
-            
+        
             modelBuilder.Entity<OrderItem>()
-                .HasOne(i => i.Product)
-                .WithMany(p => p.OrderItems)
-                .HasForeignKey(i => i.ProductId);
+                .HasOne(orderItem => orderItem.Product)
+                .WithMany(product => product.OrderItems)
+                .HasForeignKey(orderItem => orderItem.ProductId);
         }
     }
 }

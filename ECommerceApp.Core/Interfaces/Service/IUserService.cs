@@ -1,4 +1,4 @@
-﻿using ECommerceApp.Core.Models;
+﻿using ECommerceApp.Core.Entities;
 using System.Threading.Tasks;
 
 namespace ECommerceApp.Core.Interfaces.IServices

@@ -1,50 +1,97 @@
-﻿using ECommerceApp.Core.Interfaces;
+﻿using ECommerceApp.Core.Interfaces.Repositories;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+
 
 namespace ECommerceApp.Repository
 {
-    public class EfRepository<T> : IRepository<T> where T : class
+    public class EfRepository<TEntity> : IRepository<TEntity> where TEntity : class
     {
         private readonly DbContext _context;
-        private readonly DbSet<T> _dbSet;
+        private readonly DbSet<TEntity> _dbSet;
 
         public EfRepository(DbContext context)
         {
             _context = context;
-            _dbSet = context.Set<T>();
+            _dbSet = context.Set<TEntity>();
         }
 
-        public async Task<List<T>> GetAllAsync()
+        public async Task<List<TEntity>> GetAllAsync()
         {
-            return await _dbSet.ToListAsync();
+            try
+            {
+                return await _dbSet.ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error retrieving entities: {ex.Message}", ex);
+            }
         }
 
-        public async Task<T?> GetByIdAsync(int id)
+        public async Task<TEntity?> GetByIdAsync(Guid id)
         {
-            return await _dbSet.FindAsync(id);
+            try
+            {
+                if (id == Guid.Empty)
+                    throw new ArgumentException("ID cannot be empty.");
+
+                return await _dbSet.FindAsync(id);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error retrieving entity by ID: {ex.Message}", ex);
+            }
         }
 
-        public async Task AddAsync(T entity)
+        public async Task AddAsync(TEntity entity)
         {
-            await _dbSet.AddAsync(entity);
-            await _context.SaveChangesAsync();
+            try
+            {
+                if (entity == null)
+                    throw new ArgumentNullException(nameof(entity), "Entity cannot be null.");
+
+                await _dbSet.AddAsync(entity);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error adding entity: {ex.Message}", ex);
+            }
         }
 
-        public async Task UpdateAsync(T entity)
+        public async Task UpdateAsync(TEntity entity)
         {
-            _dbSet.Update(entity);
-            await _context.SaveChangesAsync();
+            try
+            {
+                if (entity == null)
+                    throw new ArgumentNullException(nameof(entity), "Entity cannot be null.");
+
+                _dbSet.Update(entity);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error updating entity: {ex.Message}", ex);
+            }
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task DeleteAsync(Guid id)
         {
-            var entity = await GetByIdAsync(id);
-            if (entity == null) return;
+            try
+            {
+                if (id == Guid.Empty)
+                    throw new ArgumentException("ID cannot be empty.");
 
-            _dbSet.Remove(entity);
-            await _context.SaveChangesAsync();
+                var entity = await GetByIdAsync(id);
+                if (entity == null)
+                    throw new KeyNotFoundException($"Entity with ID '{id}' not found.");
+
+                _dbSet.Remove(entity);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error deleting entity: {ex.Message}", ex);
+            }
         }
     }
 }
